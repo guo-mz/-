@@ -1,197 +1,383 @@
-# C++ 教学文档
+# Java 进阶教学文档
 
 ## 1. 简介
 
-C++ 是一种通用编程语言，由 Bjarne Stroustrup 于 1979 年在贝尔实验室开始开发。它在 C 语言的基础上增加了面向对象、泛型编程和异常处理等特性，广泛应用于系统软件、游戏引擎、嵌入式开发和高性能计算等领域。
+Java 是一种面向对象的通用编程语言，由 James Gosling 于 1995 年在 Sun Microsystems（现属 Oracle）发布。它遵循「一次编写，到处运行」的理念，通过 JVM（Java 虚拟机）实现跨平台，广泛应用于企业级后端、Android 开发、大数据与云计算等领域。
 
-## 2. 第一个程序
+本文档面向已掌握 Java 基础语法的读者，重点讲解进阶主题。
 
-```cpp
-#include <iostream>
-
-int main() {
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
-}
-```
-
-编译与运行（以 g++ 为例）：
+## 2. 环境与工具链
 
 ```bash
-g++ -std=c++17 -Wall -o hello hello.cpp
-./hello
+# 查看版本
+java -version
+javac -version
+
+# 编译与运行
+javac -d out src/com/example/Main.java
+java -cp out com.example.Main
 ```
 
-## 3. 基本语法
+常用工具：
 
-### 3.1 变量与类型
+- 构建工具：Maven、Gradle
+- IDE：IntelliJ IDEA、Eclipse、VS Code
+- 诊断工具：jps、jstack、jmap、jconsole、VisualVM
 
-```cpp
-int age = 25;              // 整数
- double price = 9.99;      // 双精度浮点
-char grade = 'A';          // 字符
-bool isReady = true;       // 布尔
-std::string name = "Tom";  // 字符串（需 #include <string>）
-```
+## 3. 面向对象进阶
 
-### 3.2 常量与自动类型推导
+### 3.1 抽象类与接口
 
-```cpp
-const double PI = 3.14159;
-auto count = 10;        // 推导为 int
-auto ratio = 0.5;       // 推导为 double
-```
+```java
+public abstract class Shape {
+    protected String name;
 
-### 3.3 控制流
-
-```cpp
-if (age >= 18) {
-    std::cout << "成年人" << std::endl;
-} else {
-    std::cout << "未成年人" << std::endl;
-}
-
-for (int i = 0; i < 5; ++i) {
-    std::cout << i << " ";
-}
-
-int i = 0;
-while (i < 5) {
-    ++i;
-}
-```
-
-## 4. 函数
-
-```cpp
-int add(int a, int b) {
-    return a + b;
-}
-
-// 默认参数
-void greet(const std::string& name = "World") {
-    std::cout << "Hello, " << name << "!" << std::endl;
-}
-
-// 函数重载
-int max(int a, int b) { return a > b ? a : b; }
-double max(double a, double b) { return a > b ? a : b; }
-```
-
-## 5. 面向对象编程
-
-### 5.1 类与对象
-
-```cpp
-class Rectangle {
-public:
-    Rectangle(double w, double h) : width_(w), height_(h) {}
-
-    double area() const {
-        return width_ * height_;
+    public Shape(String name) {
+        this.name = name;
     }
 
-    void setWidth(double w) { width_ = w; }
-    double width() const { return width_; }
+    public abstract double area();
 
-private:
-    double width_;
-    double height_;
-};
-
-int main() {
-    Rectangle rect(3.0, 4.0);
-    std::cout << rect.area() << std::endl; // 12
-    return 0;
-}
-```
-
-### 5.2 继承与多态
-
-```cpp
-class Shape {
-public:
-    virtual double area() const = 0;   // 纯虚函数
-    virtual ~Shape() = default;
-};
-
-class Circle : public Shape {
-public:
-    explicit Circle(double r) : radius_(r) {}
-    double area() const override {
-        return 3.14159 * radius_ * radius_;
+    public String getName() {
+        return name;
     }
-private:
-    double radius_;
-};
+}
 
-void printArea(const Shape& s) {
-    std::cout << s.area() << std::endl;
+public interface Drawable {
+    void draw();
+
+    // Java 8+ 默认方法
+    default void describe() {
+        System.out.println("这是一个可绘制对象");
+    }
+}
+
+public class Circle extends Shape implements Drawable {
+    private final double radius;
+
+    public Circle(double radius) {
+        super("Circle");
+        this.radius = radius;
+    }
+
+    @Override
+    public double area() {
+        return Math.PI * radius * radius;
+    }
+
+    @Override
+    public void draw() {
+        System.out.println("绘制圆形，半径 " + radius);
+    }
 }
 ```
 
-## 6. 标准库常用组件
+### 3.2 内部类与枚举
 
-### 6.1 容器
+```java
+public class Outer {
+    private int value = 10;
 
-```cpp
-#include <vector>
-#include <map>
-#include <string>
+    // 成员内部类
+    class Inner {
+        int getValue() {
+            return value;
+        }
+    }
 
-std::vector<int> nums = {1, 2, 3};
-nums.push_back(4);
+    // 静态嵌套类
+    static class Nested {
+        void hello() {
+            System.out.println("Nested");
+        }
+    }
+}
 
-std::map<std::string, int> scores;
-scores["Alice"] = 95;
+public enum Status {
+    PENDING("待处理"),
+    RUNNING("运行中"),
+    DONE("已完成");
+
+    private final String label;
+
+    Status(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
+}
 ```
 
-### 6.2 迭代与算法
+## 4. 泛型
 
-```cpp
-#include <algorithm>
+```java
+public class Box<T> {
+    private T value;
 
-std::sort(nums.begin(), nums.end());
-int total = std::accumulate(nums.begin(), nums.end(), 0);
+    public void set(T value) {
+        this.value = value;
+    }
+
+    public T get() {
+        return value;
+    }
+}
+
+// 泛型方法
+public static <T extends Comparable<T>> T max(T a, T b) {
+    return a.compareTo(b) >= 0 ? a : b;
+}
+
+// 通配符
+public static void printAll(List<? extends Number> list) {
+    for (Number n : list) {
+        System.out.println(n);
+    }
+}
 ```
 
-### 6.3 智能指针
+要点：
 
-```cpp
-#include <memory>
+- 类型擦除：泛型信息在运行时被擦除，无法 `new T[]`。
+- `? extends T` 用于读取（生产者），`? super T` 用于写入（消费者）。
+- 泛型不支持基本类型，需使用包装类。
 
-std::unique_ptr<Rectangle> rect = std::make_unique<Rectangle>(3.0, 4.0);
-std::shared_ptr<Shape> shape = std::make_shared<Circle>(2.0);
+## 5. 集合框架
+
+### 5.1 常用集合
+
+```java
+List<String> list = new ArrayList<>();
+list.add("Java");
+list.add("Kotlin");
+
+Set<Integer> set = new HashSet<>();
+set.add(1);
+set.add(1); // 重复元素不会被加入
+
+Map<String, Integer> scores = new HashMap<>();
+scores.put("Alice", 95);
+scores.putIfAbsent("Bob", 88);
 ```
 
-## 7. 现代 C++ 特性（C++11 及以后）
+### 5.2 选择建议
 
-- `auto` 类型推导
-- 范围 for 循环：`for (const auto& x : nums) { ... }`
-- Lambda 表达式：`auto f = [](int x) { return x * 2; };`
-- 移动语义与右值引用（`std::move`）
-- `nullptr` 替代 `NULL`
-- `constexpr` 编译期计算
+| 需求 | 推荐实现 |
+| --- | --- |
+| 随机访问多 | ArrayList |
+| 频繁头尾插入删除 | ArrayDeque |
+| 去重 | HashSet |
+| 有序去重 | TreeSet |
+| 键值查找 | HashMap |
+| 有序键值 | TreeMap |
+| 线程安全 | ConcurrentHashMap |
 
-## 8. 常见错误与建议
+### 5.3 遍历与 Stream
 
-1. 未初始化变量：始终初始化变量。
-2. 内存泄漏：优先使用智能指针和标准容器。
-3. 数组越界：使用 `std::vector` 与 `.at()` 进行边界检查。
-4. 头文件重复包含：使用 `#pragma once` 或 include guard。
-5. 编译警告：开启 `-Wall -Wextra` 并认真处理警告。
+```java
+List<String> names = List.of("Alice", "Bob", "Charlie");
 
-## 9. 学习路线建议
+// 增强 for
+for (String name : names) {
+    System.out.println(name);
+}
 
-1. 掌握基本语法与流程控制。
-2. 理解函数、引用与指针。
-3. 学习类、继承与多态。
-4. 熟悉 STL 容器与算法。
-5. 学习现代 C++ 特性与内存管理。
-6. 通过小项目（如命令行工具、小游戏）巩固实践。
+// Stream
+List<String> upper = names.stream()
+        .filter(n -> n.length() > 3)
+        .map(String::toUpperCase)
+        .sorted()
+        .collect(Collectors.toList());
+```
 
-## 10. 参考资源
+## 6. 异常处理
 
-- cppreference.com：权威的 C++ 标准库与语言参考。
-- 《C++ Primer》：系统学习 C++ 的经典教材。
-- 《Effective Modern C++》：现代 C++ 最佳实践。
+```java
+try (BufferedReader reader = new BufferedReader(new FileReader("data.txt"))) {
+    String line;
+    while ((line = reader.readLine()) != null) {
+        System.out.println(line);
+    }
+} catch (IOException e) {
+    System.err.println("读取失败: " + e.getMessage());
+} finally {
+    System.out.println("处理结束");
+}
+```
+
+- 受检异常（checked）必须处理或声明抛出。
+- 运行时异常（unchecked）通常表示编程错误。
+- 自定义异常应继承 `Exception` 或 `RuntimeException`。
+- 不要吞掉异常，避免空的 catch 块。
+
+## 7. 并发编程
+
+### 7.1 线程基础
+
+```java
+Thread t = new Thread(() -> System.out.println("运行中: " + Thread.currentThread().getName()));
+t.start();
+t.join();
+```
+
+### 7.2 线程池
+
+```java
+ExecutorService pool = Executors.newFixedThreadPool(4);
+
+Future<Integer> future = pool.submit(() -> {
+    Thread.sleep(100);
+    return 42;
+});
+
+System.out.println(future.get());
+pool.shutdown();
+```
+
+### 7.3 同步与锁
+
+```java
+public class Counter {
+    private int count = 0;
+
+    public synchronized void increment() {
+        count++;
+    }
+
+    public int get() {
+        return count;
+    }
+}
+```
+
+### 7.4 并发工具类
+
+- `AtomicInteger`：无锁原子操作
+- `CountDownLatch`：等待多个任务完成
+- `CyclicBarrier`：多线程互相等待
+- `ConcurrentHashMap`：高并发映射
+- `CompletableFuture`：异步编排
+
+```java
+CompletableFuture<String> cf = CompletableFuture
+        .supplyAsync(() -> "hello")
+        .thenApply(String::toUpperCase)
+        .thenApply(s -> s + " world");
+
+System.out.println(cf.get());
+```
+
+## 8. JVM 与内存管理
+
+### 8.1 运行时数据区
+
+- 堆（Heap）：对象实例，线程共享，是 GC 主要区域。
+- 虚拟机栈（Stack）：方法调用栈帧，线程私有。
+- 方法区 / 元空间（Metaspace）：类元信息。
+- 程序计数器：当前执行字节码位置。
+- 本地方法栈：native 方法调用。
+
+### 8.2 垃圾回收
+
+常见收集器：Serial、Parallel、CMS、G1、ZGC。
+
+```bash
+# 常用 JVM 参数
+java -Xms512m -Xmx2g -XX:+UseG1GC -XX:+PrintGCDetails -jar app.jar
+```
+
+### 8.3 类加载
+
+加载 → 验证 → 准备 → 解析 → 初始化，由双亲委派模型保证核心类安全。
+
+## 9. 反射与注解
+
+```java
+Class<?> clazz = Class.forName("com.example.Circle");
+Object instance = clazz.getDeclaredConstructor(double.class).newInstance(2.0);
+Method area = clazz.getMethod("area");
+System.out.println(area.invoke(instance));
+```
+
+```java
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Loggable {
+    String value() default "";
+}
+```
+
+反射灵活但性能较低，且破坏封装，应谨慎使用。
+
+## 10. I/O 与 NIO
+
+```java
+// 传统 I/O
+Files.writeString(Path.of("out.txt"), "hello", StandardCharsets.UTF_8);
+String content = Files.readString(Path.of("out.txt"));
+
+// NIO 通道
+try (FileChannel channel = FileChannel.open(Path.of("out.txt"), StandardOpenOption.READ)) {
+    ByteBuffer buffer = ByteBuffer.allocate(1024);
+    while (channel.read(buffer) > 0) {
+        buffer.flip();
+        while (buffer.hasRemaining()) {
+            System.out.print((char) buffer.get());
+        }
+        buffer.clear();
+    }
+}
+```
+
+## 11. 现代 Java 特性
+
+- Java 8：Lambda、Stream、Optional、默认方法
+- Java 9：模块系统（JPMS）、`var` 之前的集合工厂方法
+- Java 10：局部变量类型推断 `var`
+- Java 11：`HttpClient`、`String` 新方法
+- Java 14+：`switch` 表达式、`record`
+- Java 17：密封类（sealed）、模式匹配 `instanceof`
+- Java 21：虚拟线程、模式匹配 `switch`
+
+```java
+public record Point(int x, int y) {}
+
+sealed interface Vehicle permits Car, Bike {}
+record Car(String model) implements Vehicle {}
+record Bike(String model) implements Vehicle {}
+
+// 虚拟线程（Java 21）
+Thread vt = Thread.ofVirtual().start(() -> System.out.println("virtual thread"));
+vt.join();
+```
+
+## 12. 常见错误与最佳实践
+
+1. 使用 `equals` 比较对象，而非 `==`。
+2. 重写 `equals` 时必须同时重写 `hashCode`。
+3. 优先使用接口类型声明变量，如 `List<String>` 而非 `ArrayList<String>`。
+4. 避免在循环中拼接字符串，使用 `StringBuilder`。
+5. 及时关闭资源，使用 try-with-resources。
+6. 避免过度同步，缩小锁的粒度。
+7. 使用 `Optional` 表达可能为空的值，减少 NPE。
+8. 遵循命名规范：类名大驼峰，方法与变量小驼峰，常量全大写。
+
+## 13. 学习路线建议
+
+1. 巩固语法、集合与异常处理。
+2. 深入泛型与函数式编程（Lambda、Stream）。
+3. 掌握并发编程与线程池。
+4. 理解 JVM 内存模型与 GC 调优。
+5. 学习反射、注解与动态代理。
+6. 熟悉构建工具与单元测试（JUnit、Mockito）。
+7. 通过项目实践：REST 服务、缓存、消息队列。
+
+## 14. 参考资源
+
+- Oracle 官方 Java 文档与教程
+- 《Effective Java》（Joshua Bloch）
+- 《Java 并发编程实战》
+- 《深入理解 Java 虚拟机》（周志明）
+- Baeldung、Jenkov 等技术博客
