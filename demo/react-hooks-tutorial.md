@@ -1,208 +1,222 @@
-# React Hooks 教程
+# Vue 3 组合式 API 教程
 
-本教程介绍 React 的核心 Hooks，帮助你理解函数组件中状态管理与副作用处理的方式。
+本教程介绍 Vue 3 的组合式 API（Composition API），帮助你理解如何在 `<script setup>` 中组织状态、计算属性、副作用与可复用逻辑。
 
 ## 环境准备
 
-如果还没有 React 项目，可以使用 Vite 快速初始化：
+如果还没有 Vue 项目，可以使用 Vite 快速初始化：
 
 ```bash
-npm create vite@latest my-app -- --template react
+npm create vite@latest my-app -- --template vue
 cd my-app
 npm install
 npm run dev
 ```
 
-## useState
+## setup 语法糖
 
-`useState` 用于在函数组件中添加状态。
+`<script setup>` 是组合式 API 的编译时语法糖，顶层声明的变量、函数会自动暴露给模板，无需 `return`。
 
-```jsx
-import { useState } from 'react';
+```vue
+<script setup>
+import { ref } from 'vue'
 
-function Counter() {
-  const [count, setCount] = useState(0);
+const msg = ref('Hello Vue 3')
+</script>
 
-  return (
-    <div>
-      <p>当前计数：{count}</p>
-      <button onClick={() => setCount(count + 1)}>加一</button>
-    </div>
-  );
-}
+<template>
+  <p>{{ msg }}</p>
+</template>
 ```
 
-## useEffect
+## ref 与 reactive
 
-`useEffect` 用于处理副作用，例如数据请求、订阅和手动修改 DOM。
+`ref` 用于定义任意类型的响应式数据，通过 `.value` 访问；`reactive` 用于定义对象类型的响应式数据，直接访问属性。
 
-```jsx
-import { useEffect, useState } from 'react';
+```vue
+<script setup>
+import { ref, reactive } from 'vue'
 
-function UserList() {
-  const [users, setUsers] = useState([]);
+const count = ref(0)
+const state = reactive({ name: 'Vue', version: 3 })
 
-  useEffect(() => {
-    fetch('https://jsonplaceholder.typicode.com/users')
-      .then((res) => res.json())
-      .then((data) => setUsers(data));
-  }, []);
-
-  return (
-    <ul>
-      {users.map((user) => (
-        <li key={user.id}>{user.name}</li>
-      ))}
-    </ul>
-  );
+function increment() {
+  count.value++
 }
+</script>
+
+<template>
+  <p>当前计数：{{ count }}</p>
+  <button @click="increment">加一</button>
+  <p>{{ state.name }} {{ state.version }}</p>
+</template>
 ```
 
-## useContext
+## computed
 
-`useContext` 用于读取 React Context 的值，避免逐层传递 props。
+`computed` 用于定义计算属性，它会根据依赖自动缓存，只有依赖变化时才重新计算。
 
-```jsx
-import { createContext, useContext } from 'react';
+```vue
+<script setup>
+import { ref, computed } from 'vue'
 
-const ThemeContext = createContext('light');
+const firstName = ref('三')
+const lastName = ref('张')
 
-function Button() {
-  const theme = useContext(ThemeContext);
-  return <button className={theme}>按钮</button>;
-}
+const fullName = computed(() => lastName.value + firstName.value)
+</script>
+
+<template>
+  <p>姓名：{{ fullName }}</p>
+</template>
 ```
 
-## useReducer
+## watch 与 watchEffect
 
-`useReducer` 适合管理包含多个子值的复杂状态逻辑。
+`watch` 用于监听指定的响应式数据源，`watchEffect` 会自动收集依赖并立即执行。
 
-```jsx
-import { useReducer } from 'react';
+```vue
+<script setup>
+import { ref, watch, watchEffect } from 'vue'
 
-function reducer(state, action) {
-  switch (action.type) {
-    case 'increment':
-      return { count: state.count + 1 };
-    case 'decrement':
-      return { count: state.count - 1 };
-    default:
-      return state;
+const keyword = ref('')
+const result = ref('')
+
+watch(keyword, (newVal, oldVal) => {
+  console.log(`从 ${oldVal} 变为 ${newVal}`)
+})
+
+watchEffect(() => {
+  result.value = keyword.value ? `搜索：${keyword.value}` : ''
+})
+</script>
+
+<template>
+  <input v-model="keyword" placeholder="输入关键词" />
+  <p>{{ result }}</p>
+</template>
+```
+
+## 生命周期钩子
+
+组合式 API 提供与选项式 API 对应的生命周期钩子，如 `onMounted`、`onUpdated`、`onUnmounted` 等，需在 `setup` 中同步调用。
+
+```vue
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const width = ref(window.innerWidth)
+
+function handleResize() {
+  width.value = window.innerWidth
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
+})
+</script>
+
+<template>
+  <p>窗口宽度：{{ width }}</p>
+</template>
+```
+
+## provide 与 inject
+
+`provide` 与 `inject` 用于跨层级传递数据，避免逐层传递 props。
+
+```vue
+<script setup>
+import { provide, inject, ref } from 'vue'
+
+const theme = ref('light')
+provide('theme', theme)
+</script>
+
+<template>
+  <Child />
+</template>
+```
+
+```vue
+<script setup>
+import { inject } from 'vue'
+
+const theme = inject('theme', 'light')
+</script>
+
+<template>
+  <button :class="theme">按钮</button>
+</template>
+```
+
+## 模板引用
+
+使用 `ref` 声明模板引用，配合 `useTemplateRef` 或同名变量即可访问 DOM 节点或子组件实例。
+
+```vue
+<script setup>
+import { ref } from 'vue'
+
+const inputRef = ref(null)
+
+function focusInput() {
+  inputRef.value.focus()
+}
+</script>
+
+<template>
+  <input ref="inputRef" type="text" />
+  <button @click="focusInput">聚焦输入框</button>
+</template>
+```
+
+## 自定义组合函数（Composables）
+
+组合函数是以 `use` 开头的函数，用于复用组件之间的状态逻辑。
+
+```js
+import { ref, onMounted, onUnmounted } from 'vue'
+
+export function useWindowWidth() {
+  const width = ref(window.innerWidth)
+
+  function handleResize() {
+    width.value = window.innerWidth
   }
-}
 
-function Counter() {
-  const [state, dispatch] = useReducer(reducer, { count: 0 });
+  onMounted(() => window.addEventListener('resize', handleResize))
+  onUnmounted(() => window.removeEventListener('resize', handleResize))
 
-  return (
-    <div>
-      <p>计数：{state.count}</p>
-      <button onClick={() => dispatch({ type: 'increment' })}>加一</button>
-      <button onClick={() => dispatch({ type: 'decrement' })}>减一</button>
-    </div>
-  );
+  return width
 }
 ```
 
-## useRef
+在组件中使用：
 
-`useRef` 返回一个可变的 ref 对象，常用于访问 DOM 节点或保存不触发渲染的值。
+```vue
+<script setup>
+import { useWindowWidth } from './composables/useWindowWidth'
 
-```jsx
-import { useRef } from 'react';
+const width = useWindowWidth()
+</script>
 
-function TextInput() {
-  const inputRef = useRef(null);
-
-  const focusInput = () => {
-    inputRef.current.focus();
-  };
-
-  return (
-    <div>
-      <input ref={inputRef} type="text" />
-      <button onClick={focusInput}>聚焦输入框</button>
-    </div>
-  );
-}
-```
-
-## useMemo
-
-`useMemo` 用于缓存计算结果，避免在每次渲染时重复执行昂贵的计算。
-
-```jsx
-import { useMemo, useState } from 'react';
-
-function ExpensiveList({ items }) {
-  const [filter, setFilter] = useState('');
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => item.includes(filter));
-  }, [items, filter]);
-
-  return (
-    <div>
-      <input value={filter} onChange={(e) => setFilter(e.target.value)} />
-      <ul>
-        {filteredItems.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-```
-
-## useCallback
-
-`useCallback` 用于缓存函数引用，常与 `React.memo` 配合优化子组件渲染。
-
-```jsx
-import { useCallback, useState } from 'react';
-
-function Parent() {
-  const [count, setCount] = useState(0);
-
-  const handleClick = useCallback(() => {
-    setCount((c) => c + 1);
-  }, []);
-
-  return <Child onClick={handleClick} count={count} />;
-}
-
-function Child({ onClick, count }) {
-  return <button onClick={onClick}>点击次数：{count}</button>;
-}
-```
-
-## 自定义 Hook
-
-自定义 Hook 是以 `use` 开头的函数，可以复用组件之间的状态逻辑。
-
-```jsx
-import { useState, useEffect } from 'react';
-
-function useWindowWidth() {
-  const [width, setWidth] = useState(window.innerWidth);
-
-  useEffect(() => {
-    const handleResize = () => setWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  return width;
-}
+<template>
+  <p>窗口宽度：{{ width }}</p>
+</template>
 ```
 
 ## 小结
 
-- `useState`：管理组件状态。
-- `useEffect`：处理副作用。
-- `useContext`：读取上下文。
-- `useReducer`：管理复杂状态逻辑。
-- `useRef`：保存可变引用。
-- `useMemo`：缓存计算结果。
-- `useCallback`：缓存函数引用。
-- 自定义 Hook：复用状态逻辑。
+- `setup` 语法糖：组织组件逻辑，自动暴露顶层绑定。
+- `ref` / `reactive`：定义响应式数据。
+- `computed`：定义带缓存的计算属性。
+- `watch` / `watchEffect`：监听响应式数据变化。
+- 生命周期钩子：在 `setup` 中注册 `onMounted` 等钩子。
+- `provide` / `inject`：跨层级传递数据。
+- 模板引用：访问 DOM 节点或子组件实例。
+- 自定义组合函数：复用状态逻辑。
