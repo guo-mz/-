@@ -1,4 +1,4 @@
-// demo/index.js
+// demo/aa.js
 // 一个简单的 JavaScript 示例文件
 
 // 变量声明
